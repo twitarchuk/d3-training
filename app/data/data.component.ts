@@ -31,20 +31,52 @@ export class DataComponent {
         this.svg = d3.select('svg');
     }
 
+    public rectAttributes(selection) {
+      selection.attr('class', 'my-rect')
+      .attr('x', 0)
+      .attr('y', function(d, i) {
+        return 10 + i * 20;
+      })
+      .attr('height', 15)
+      .attr('width', function(d, i) {
+        return d.value;
+      });
+    }
+
     public drawBarCharts() {
-        
+        this.svg.selectAll('rect')
+            .data(this.data)
+            .enter()
+            .append('rect')
+            .call(this.rectAttributes);
     }
 
     public addInteractions() {
-
+      let selection = this.svg.on('click', function() {
+                            d3.select(d3.event.target).style('fill', 'green');
+                          });
     }
 
     public addOne() {
         this.data.push({ id: this.data.length, value: this.randomOneElement() });
+        this.svg.selectAll('rect')
+            .data(this.data)
+            .enter()
+            .append('rect')
+            .call(this.rectAttributes);
     }
 
     public removeOne() {
         this.data.splice(2, 1);
+        this.svg.selectAll('rect')
+            .data(this.data, function(d, i) {
+              return d.id;
+            })
+            .exit()
+            .transition()
+            .duration(1000)
+            .attr('width', 0)
+            .remove();
     }
 
     public changeData() {
@@ -53,6 +85,9 @@ export class DataComponent {
         } else {
             this.data = this.dataV1;
         }
+        this.svg.selectAll('rect').data(this.data).attr('width', function(d, i){
+          return d.value;
+        });
     }
 
     public randomOneElement(): number {
@@ -65,5 +100,30 @@ export class DataComponent {
         for (let i = 0 ; i < count ; i++) {
             this.data.push({ id: i, value: this.randomOneElement() });
         }
+        let selection = this.svg.selectAll('rect')
+                            .data(this.data, function(d, i) {
+                              console.log(d, i);
+                              return d.id;
+                            });
+        // exit
+        selection.exit()
+        .transition()
+        .duration(1000)
+        .attr('width', 0)
+        .remove();
+        // update
+        selection.transition()
+                 .duration(1000)
+                 .delay(1000)
+                 .call(this.rectAttributes);
+        // enter
+        selection.enter()
+                 .append('rect')
+                 .call(this.rectAttributes)
+                 .attr('width', 0)
+                 .transition()
+                 .duration(1000)
+                 .delay(1000)
+                 .call(this.rectAttributes);
     }
 }

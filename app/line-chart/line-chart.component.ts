@@ -32,10 +32,17 @@ export class LineChartComponent implements OnInit {
     private paintLayer;
     private line;
 
+    private width;
+    private height;
+
     constructor() { }
 
     public ngOnInit() {
         this.svg = d3.select('svg');
+        this.width = this.svg.node().getBoundingClientRect().width;
+        this.width = this.width - this.margin.left - this.margin.right;
+        this.height = this.svg.node().getBoundingClientRect().height;
+        this.height = this.height - this.margin.top - this.margin.bottom;
     }
 
     public drawLineChart() {
@@ -46,19 +53,43 @@ export class LineChartComponent implements OnInit {
     }
 
     private drawXAxis() {
+      let xValues = this.data.map( point => point.x);
+      this.xScale = d3.scaleLinear()
+        .domain([d3.min(xValues), d3.max(xValues)])
+        .range([0, this.width]);
 
+      this.xAxis = this.svg.append('g')
+          .attr('class', 'x axis')
+          .attr('transform', `translate(${this.margin.left},${this.margin.top + this.height})`)
+          .call(d3.axisBottom(this.xScale));
     }
 
     private drawYAxis() {
+      let yValues = this.data.map( point => point.y);
+      this.yScale = d3.scaleLinear()
+        .domain([d3.min(yValues), d3.max(yValues)])
+        .range([this.height, 0]);
 
+      this.yScale = this.svg.append('g')
+          .attr('class', 'y axis')
+          .attr('transform', `translate(${this.margin.left},${this.margin.top})`)
+          .call(d3.axisLeft(this.yScale));
     }
 
     private preparePaintLayer() {
-        
+      this.paintLayer = this.svg.append('g').classed('my-data', true)
+                                .attr('transform', `translate(${this.margin.left}, ${this.margin.top})`)
     }
 
     private drawLine() {
+      this.line = d3.line()
+                    .x((d: any) => { return this.xScale(d.x); })
+                    .y((d: any) => { return this.xScale(d.y); });
 
+      this.paintLayer.append('path')
+                     .classed('line', true)
+                     .data([this.data])
+                     .attr('d', this.line);
     }
 
     public randomOneElement(): number {
